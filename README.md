@@ -30,7 +30,7 @@ You can also run the notebook on your machine. What you need to do is:
   - Clone or [download](https://github.com/feiglab/idpgan/archive/refs/heads/main.zip) this repository on your system.
   - Make sure to have the `idpgan` directory (the one found in the root of this repository) in your `PYTHONPATH`, so that you can import the `idpgan` library.
   - Run the `idpgan_experiments.ipynb` notebook in the `notebooks` directory.
-  - In the notebook, there is the following line of code: `data_dp = "data"`. It must be set as the path on your system of the `data` directory of this repository (which contains data files and the generator weights). Make sure to edit it so that it points to the right location.
+  - In the notebook, there is the following line of code: `data_dp = "data"`. It must point to the path on your system where the `data` directory of this repository is located (the directory contains data files and the generator weights). Make sure to edit it so that it points to the right location.
 
 ## Datasets
 
