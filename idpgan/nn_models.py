@@ -238,7 +238,7 @@ class IdpGANGenerator(nn.Module):
                  use_embed_repeat=True,
                  embed_dim_1d=32,
                  project_embed_1d=False,
-                 pos_embed="af2_2d_ib", pos_embed_dim=64,
+                 pos_embed_dim=64,
                  use_bias_2d=True,
                  pos_embed_max_l=24,
                  *args, **kwargs):
@@ -428,7 +428,7 @@ def load_netg_article(model_fp=None, device="cpu"):
                        activation="lrelu",
                        use_embed_repeat=True, embed_dim_1d=32,
                        project_embed_1d=False,
-                       pos_embed="af2_2d_ib", pos_embed_dim=64,
+                       pos_embed_dim=64,
                        use_bias_2d=True, pos_embed_max_l=24)
     if model_fp is not None:
         netg.load_state_dict(torch.load(model_fp))
