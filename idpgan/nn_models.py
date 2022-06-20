@@ -431,10 +431,6 @@ def load_netg_article(model_fp=None, device="cpu"):
                        pos_embed="af2_2d_ib", pos_embed_dim=64,
                        use_bias_2d=True, pos_embed_max_l=24)
     if model_fp is not None:
-        if device == "cpu":
-            netg.load_state_dict(torch.load(model_fp,
-                                            map_location=torch.device('cpu')))
-        else:
-            netg.load_state_dict(torch.load(model_fp))
+        netg.load_state_dict(torch.load(model_fp))
     netg = netg.to(device)
     return netg
