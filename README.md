@@ -14,7 +14,7 @@ There are two ways in which you can run the notebook.
 
 ### Colab version
 
-This is probably the easiest way. Just reach the notebook at: [idpGAN Colab notebook](https://colab.research.google.com/github/feiglab/idpgan/blob/main/notebooks/idpgan_experiments.ipynb).
+This is the easiest way. Just reach the notebook at: [idpGAN Colab notebook](https://colab.research.google.com/github/feiglab/idpgan/blob/main/notebooks/idpgan_experiments.ipynb).
 
 Running the initial cells will automatically install all the dependencies.
 
