@@ -38,6 +38,12 @@ In `data` directory of this repository, we have the following files:
   - `idptest.fasta`: a [FASTA](https://en.wikipedia.org/wiki/FASTA_format) file storing all the sequences of *IDP_test*, the test set of idpGAN.
   - `idpgan_training_set.fasta`: a FASTA file storing all the sequences used in the training set of idpGAN. All of them were obtained from [DisProt](https://disprot.org).
   - `hbval_split_[01234].txt`: files storing the names of the training set sequences used in the five validation partitions of the *HB_val* set in the [idpGAN article](https://www.biorxiv.org/content/10.1101/2022.06.18.496675v1).
+  
+## References
+
+- Janson G, Valdes-Garcia G, Heo L, Feig M. Direct Generation of Protein Conformational Ensembles via Machine Learning.
+BioRxiv (2022) doi: [10.1101/2022.06.18.496675](https://www.biorxiv.org/content/10.1101/2022.06.18.496675v1.article-info)
+
 
 ## Contact
 
