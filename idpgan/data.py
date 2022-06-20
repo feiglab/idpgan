@@ -13,3 +13,23 @@ def parse_fasta_seq(fasta_fp):
                 continue
             seq += line.rstrip()
     return seq
+
+
+one_to_three = {"Q": "GLN", "W": "TRP", "E": "GLU", "R": "ARG", "T": "THR",
+                "Y": "TYR", "I": "ILE", "P": "PRO", "A": "ALA", "S": "SER",
+                "D": "ASP", "F": "PHE", "G": "GLY", "H": "HIS", "K": "LYS",
+                "L": "LEU", "C": "CYS", "V": "VAL", "N": "ASN", "M": "MET"}
+
+def seq_to_cg_pdb(seq, out_fp=None):
+    pdb_lines = []
+    for i, aa_i in enumerate(seq):
+        res_idx = i + 1
+        aa_i = one_to_three[aa_i]
+        line_i = "ATOM{:>7} CG   {} A{:>4}       0.000   0.000   0.000  1.00  0.00\n".format(
+                   str(res_idx), aa_i, str(res_idx))
+        pdb_lines.append(line_i)
+    pdb_content = "".join(pdb_lines)
+    if out_fp is not None:
+        with open(out_fp, "w") as o_fh:
+            o_fh.write(pdb_content)
+    return pdb_content
