@@ -1,6 +1,6 @@
 # Idpgan
 
-This the idpGAN repository. IdpGAN is a machine-learning based conformational ensemble generator for coarse grained (CG) models of intrinsically disordered proteins (IDPs).
+This is the idpGAN repository. IdpGAN is a machine-learning based conformational ensemble generator for coarse grained (CG) models of intrinsically disordered proteins (IDPs).
 
 Details of idpGAN are described in [bioRxiv](https://www.biorxiv.org/content/10.1101/2022.06.18.496675v1).
 
@@ -8,13 +8,13 @@ Details of idpGAN are described in [bioRxiv](https://www.biorxiv.org/content/10.
 
 To use idpGAN (implemented in [PyTorch](https://pytorch.org)), you can run a Jupyter notebook illustrating idpGAN functionalities.
 
-The notebook shows how to use the generator neural network of idpGAN to generate 3D structures of CG IDPs. It also allows you to generate ensembles for user-defined protein sequences.
+The notebook shows how to use the generator neural network of idpGAN to generate 3D structures of CG IDPs.
 
-There are two main ways in which you can run the notebook.
+There are two ways in which you can run the notebook.
 
 ### Colab version
 
-This is probably the easiest way. Just reach the notebook at: [idpGAN Colab notebook](https://www.biorxiv.org/content/10.1101/2022.06.18.496675v1).
+This is probably the easiest way. Just reach the notebook at: [idpGAN Colab notebook](https://colab.research.google.com/github/feiglab/idpgan/blob/main/notebooks/idpgan_experiments.ipynb).
 
 Running the initial cells will automatically install all the dependencies.
 
@@ -41,5 +41,6 @@ In `data` directory of this repository, we have the following files:
 
 ## Contact
 
-[FeigLab](https://feig.bch.msu.edu)
+[FeigLab](https://feig.bch.msu.edu), mfeiglab@gmail.com
+
 [Michigan State University](https://msu.edu)
