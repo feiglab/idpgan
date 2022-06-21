@@ -47,7 +47,7 @@ We also have the following files, that allow you to run a demo of the generatati
 
 You can run the idpGAN notebook [remotely on Colab](https://colab.research.google.com/github/feiglab/idpgan/blob/main/notebooks/idpgan_experiments.ipynb). You do not need to install any software on your system, you only need to first login on your Google account.
 
-Otherwise you can run the idpGAN notebook (and library) locally on your machine. Any Python (version >= 3.8) with the [above requirements](#Running locally) should work well on all major operating systems (Windows, Mac, Linux). We developed and tested the code on Linux, Python (3.8.10) and PyTorch (1.7.1).
+Otherwise you can run the idpGAN notebook (and library) locally on your machine. Any Python (version >= 3.8) with the [above requirements](#running-locally) should work well on all major operating systems (Windows, Mac, Linux). We developed and tested the code on Linux, Python (3.8.10) and PyTorch (1.7.1).
 
 In all cases, if you plan to generate conformational ensembles with large number of snapshots (> 5000), we suggest to use [PyTorch GPU support](https://wandb.ai/wandb/common-ml-errors/reports/How-To-Use-GPU-with-PyTorch---VmlldzozMzAxMDk) to largely speed up computational times.
   
