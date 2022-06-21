@@ -18,7 +18,7 @@ This is the easiest way. This option allows you to run the notebook remotely. Ju
 
 Running the initial cells will automatically install all the dependencies (please note that the installation may require a few minutes).
 
-NOTE: please make sure to use a GPU runtime to largely speed up the idpGAN conformation generation process. If you use the default runtime (running on CPU), generating conformational ensembles with idpGAN could take several minutes. To use a GPU runtime:
+NOTE: make sure to use a GPU runtime to largely speed up the idpGAN conformation generation process. If you use the default runtime (running on CPU), the process could take several minutes. To use a GPU runtime:
   - Use the `Edit` -> `Notebook settings` item in the main menu of the Colab page.
   - Set the `Hardware accelerator` option to `GPU`.
 
@@ -34,12 +34,12 @@ You can also run the notebook on your machine. What you need to do is:
 
 ## Datasets
 
-In `data` directory of this repository, we have the following files with information on the training, validation and test sets of idpGAN:
-  - `idptest.fasta`: a [FASTA](https://en.wikipedia.org/wiki/FASTA_format) file storing all the sequences of *IDP_test*, the test set of idpGAN.
+In the `data` directory of this repository, we have the following files with information on the training, validation and test sets of idpGAN:
   - `idpgan_training_set.fasta`: a FASTA file storing all the sequences used in the training set of idpGAN. All of them were obtained from [DisProt](https://disprot.org).
   - `hbval_split_[01234].txt`: files storing the names of the training set sequences used in the five validation partitions of the *HB_val* set in the [idpGAN article](https://www.biorxiv.org/content/10.1101/2022.06.18.496675v1).
+  - `idptest.fasta`: a [FASTA](https://en.wikipedia.org/wiki/FASTA_format) file storing all the sequences of *IDP_test*, the test set of idpGAN.
 
-We also have the following files, that constitute a small dataset to demo the generatative model:
+We also have the following files, that allow you to run a demo of the generatative model on a small dataset:
   - `generator.pt`: PyTorch weights for a pre-trained generator model. They are the same weights we used to generate conformations for the *IDP_test* proteins in the article.
   - `*.npy`: NumPy array files storing the xyz coordinates for 5 x 1000 ns MD simulations for two *IDP_test* proteins and one poly-alanine molecule.
   
