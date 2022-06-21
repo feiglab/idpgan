@@ -19,7 +19,7 @@ This is the easiest way. Just reach the notebook at: [idpGAN Colab notebook](htt
 Running the initial cells will automatically install all the dependencies.
 
 NOTE: please make sure to use a GPU runtime to speed up the idpGAN generation process. If you use the default runtime (running on CPU), generating conformational ensembles with idpGAN could take several minutes. To use a GPU runtime:
-  - Use the `Edit` -> `Notebook` settings item on the main menu of the Colab page.
+  - Use the `Edit` -> `Notebook settings` item in the main menu of the Colab page.
   - Set the `Hardware accelerator` option to `GPU`.
 
 ### Running locally
