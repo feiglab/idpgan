@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def parse_fasta_seq(fasta_fp):
     """Gets the sequence in a one-entry FASTA file."""
     seq = ""
@@ -21,6 +24,10 @@ one_to_three = {"Q": "GLN", "W": "TRP", "E": "GLU", "R": "ARG", "T": "THR",
                 "L": "LEU", "C": "CYS", "V": "VAL", "N": "ASN", "M": "MET"}
 
 def seq_to_cg_pdb(seq, out_fp=None):
+    """
+    Gets an amino acid sequence and returns a template
+    CG PDB file.
+    """
     pdb_lines = []
     for i, aa_i in enumerate(seq):
         res_idx = i + 1
@@ -33,3 +40,10 @@ def seq_to_cg_pdb(seq, out_fp=None):
         with open(out_fp, "w") as o_fh:
             o_fh.write(pdb_content)
     return pdb_content
+
+
+def random_sample_trajectory(traj, n_samples):
+    """Samples a random subset of a trajectory."""
+    random_ids = np.random.choice(traj.shape[0], n_samples,
+                                  replace=traj.shape[0] < n_samples)
+    return traj[random_ids]
