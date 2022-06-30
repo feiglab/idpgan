@@ -170,5 +170,5 @@ def plot_dmap_snapshots(dmap, title, n_snapshots, dpi=96):
         im_i = ax[i].imshow(_dmap_i)
         ax[i].set_title("snapshot %s" % random_ids[i])
     cbar = fig.colorbar(im_i, ax=ax, location='right', shrink=0.8)
-    cbar.set_label(r"Average $d_{ij}$ [nm]")
+    cbar.set_label(r"$d_{ij}$ [nm]")
     plt.show()
