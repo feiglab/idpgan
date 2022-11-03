@@ -4,26 +4,32 @@ import torch
 import torch.nn as nn
 
 from idpgan.common import get_activation
+from idpgan.coords import torch_chain_dihedrals
 
 
 class IdpGANBlock(nn.Module):
     
     def __init__(self, embed_dim, d_model=192, nhead=12,
                  dim_feedforward=128,
-                 dropout=0.1, layer_norm_eps=1e-5,
+                 dropout=0.1,
+                 layer_norm_eps=1e-5,
+                 norm_pos="post",
                  embed_dim_2d=None,
                  use_bias_2d=True,
                  embed_dim_1d=None,
-                 project_embed_1d=False,
                  activation="relu",
                  dp_attn_norm="d_model"):
         
         super(IdpGANBlock, self).__init__()
         
         self.use_norm = layer_norm_eps is not None
-        self.project_embed_1d = project_embed_1d
+        self.norm_pos = norm_pos
+        if not norm_pos in ("post", "pre"):
+            raise KeyError(norm_pos)
         self.use_embed_2d = embed_dim_2d is not None
         self.use_embed_1d = embed_dim_1d is not None
+        self.use_dropout = dropout is not None
+        _dropout = dropout if dropout is not None else 0.0
         
         # Transformer layer.
         self.idp_attn = IdpGANLayer(in_dim=embed_dim,
@@ -33,28 +39,29 @@ class IdpGANBlock(nn.Module):
                                     in_dim_2d=embed_dim_2d,
                                     use_bias_2d=use_bias_2d)
 
-        if self.project_embed_1d:
-            self.project_embed_1d_linear = nn.Linear(embed_dim_1d, embed_dim)
-            contact_embed_1d_dim = 0
-        else:
-            contact_embed_1d_dim = embed_dim_1d
+        contact_embed_1d_dim = embed_dim_1d
         updater_in_dim = embed_dim+contact_embed_1d_dim
             
         # Updater module (implementation of Feedforward model of the original
         # transformer).
         self.linear1 = nn.Linear(updater_in_dim, dim_feedforward)
-        self.dropout_p = dropout
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(_dropout)
         self.linear2 = nn.Linear(dim_feedforward, embed_dim)
         if self.use_norm:
             self.norm1 = nn.LayerNorm(embed_dim, eps=layer_norm_eps)
-            self.norm2 = nn.LayerNorm(embed_dim, eps=layer_norm_eps)
-        self.dropout1 = nn.Dropout(dropout)
-        self.dropout2 = nn.Dropout(dropout)
+            if self.norm_pos == "post":
+                self.norm2 = nn.LayerNorm(embed_dim, eps=layer_norm_eps)
+            elif self.norm_pos == "pre":
+                self.pre_linear = nn.Linear(updater_in_dim, updater_in_dim)
+                self.norm2 = nn.LayerNorm(updater_in_dim, eps=layer_norm_eps)
+            else:
+                raise KeyError(self.norm_pos)
+        self.dropout1 = nn.Dropout(_dropout)
+        self.dropout2 = nn.Dropout(_dropout)
         self.activation = get_activation(activation)
 
         self.update_module = [self.linear1, self.activation]
-        if self.dropout_p is not None:
+        if self.use_dropout:
             self.update_module.append(self.dropout)
         self.update_module.append(self.linear2)
         self.update_module = nn.Sequential(*self.update_module)
@@ -77,31 +84,31 @@ class IdpGANBlock(nn.Module):
         self._check_embedding(self.use_embed_1d, x, "x", "1d")
         
         # Actually run the transformer block.
+        if self.use_norm and self.norm_pos == "pre":
+            s = self.norm1(s)
         s2 = self.idp_attn(s, s, s, p=p)[0]
-        if self.dropout_p is not None:
+        if self.use_dropout:
             s = s + self.dropout1(s2)
         else:
             s = s + s2
-        if self.use_norm:
+        if self.use_norm and self.norm_pos == "post":
             s = self.norm1(s)
         
         # Use amino acid conditional information.
         if self.use_embed_1d:
-            if self.project_embed_1d:
-                x = self.project_embed_1d_linear(x)
-                um_in = s + x
-            else:
-                um_in = torch.cat([s, x], axis=-1)
+            um_in = torch.cat([s, x], axis=-1)
         else:
             um_in = s
         
         # Use the updater module.
+        if self.use_norm and self.norm_pos == "pre":
+            um_in = self.norm2(self.pre_linear(um_in))
         s2 = self.update_module(um_in)
-        if self.dropout_p is not None:
+        if self.use_dropout:
             s = s + self.dropout2(s2)
         else:
             s = s + s2
-        if self.use_norm:
+        if self.use_norm and self.norm_pos == "post":
             s = self.norm2(s)
         return s
         
@@ -229,6 +236,7 @@ class IdpGANGenerator(nn.Module):
                  nhead, dim_feedforward, dropout,
                  num_layers,
                  layer_norm_eps,
+                 norm_pos="post",
                  dp_attn_norm="d_model",  # "d_model", "head_dim"
                  # MLP modules params.
                  n_hl_out=1,
@@ -237,11 +245,9 @@ class IdpGANGenerator(nn.Module):
                  # Embedding params.
                  use_embed_repeat=True,
                  embed_dim_1d=32,
-                 project_embed_1d=False,
                  pos_embed_dim=64,
                  use_bias_2d=True,
-                 pos_embed_max_l=24,
-                 *args, **kwargs):
+                 pos_embed_max_l=24, *args, **kwargs):
         
         super(IdpGANGenerator, self).__init__()
         
@@ -279,10 +285,10 @@ class IdpGANGenerator(nn.Module):
                               dim_feedforward=dim_feedforward,
                               dropout=dropout,
                               layer_norm_eps=layer_norm_eps,
+                              norm_pos=norm_pos,
                               embed_dim_2d=_embed_dim_2d,
                               use_bias_2d=use_bias_2d,
                               embed_dim_1d=_embed_dim_1d,
-                              project_embed_1d=project_embed_1d,
                               activation=activation,
                               dp_attn_norm=dp_attn_norm)
             self.transformer.append(l_i)
@@ -368,7 +374,8 @@ class IdpGANGenerator(nn.Module):
     
     
     out_feature = "xyz"
-    def predict_idp(self, n_samples, aa_seq, device="cpu", batch_size=2048):
+    def predict_idp(self, n_samples, aa_seq, device="cpu", batch_size=2048,
+                    get_a=False):
         """
         Generates a conformational ensemble for a protein with amino acid
         sequence 'aa_seq'.
@@ -394,7 +401,10 @@ class IdpGANGenerator(nn.Module):
                 r_k = self.forward(z_k, a_k, get_coords=True)
                 r.append(r_k)
             r = torch.cat(r, axis=0)
-        return r
+        if not get_a:
+            return r
+        else:
+            return r, a
 
 
 aa_list = list("QWERTYIPASDFGHKLCVNM")
@@ -418,19 +428,223 @@ def get_features_from_seq(seq):
 
 def load_netg_article(model_fp=None, device="cpu"):
     """
-    Loads an instance of the idpGAN generator as presented in the idpGAN article.
+    Loads an instance of the idpGAN generator trained on simulation data
+    from CG-based simulations as presented in the idpGAN article.
     Use the 'model_fp' argument to provide the saved pytorch weights.
     """
     netg = IdpGANGenerator(nz=16, embed_dim=64, d_model=128, nhead=8,
-                       dim_feedforward=128, dropout=0.0, num_layers=8,
-                       layer_norm_eps=1e-05, dp_attn_norm="d_model",
-                       n_hl_out=1, n_hl_embed=1,
-                       activation="lrelu",
-                       use_embed_repeat=True, embed_dim_1d=32,
-                       project_embed_1d=False,
-                       pos_embed_dim=64,
-                       use_bias_2d=True, pos_embed_max_l=24)
+                           dim_feedforward=128, dropout=0.0, num_layers=8,
+                           layer_norm_eps=1e-05, norm_pos="post",
+                           dp_attn_norm="d_model",
+                           n_hl_out=1, n_hl_embed=1,
+                           activation="lrelu",
+                           use_embed_repeat=True, embed_dim_1d=32,
+                           pos_embed_dim=64,
+                           use_bias_2d=True, pos_embed_max_l=24)
     if model_fp is not None:
         netg.load_state_dict(torch.load(model_fp))
     netg = netg.to(device)
     return netg
+
+
+#####################################################################
+
+#####################################################################
+
+class StereoSelNN(nn.Module):
+
+    def __init__(self, in_dim,
+                 embed_dim,
+                 d_model,
+                 nhead, dim_feedforward, dropout,
+                 num_layers,
+                 layer_norm_eps,
+                 norm_pos="post",
+                 dp_attn_norm="d_model",  # "d_model", "head_dim"
+                 # MLP modules params.
+                 n_hl_out=1,
+                 n_hl_embed=1,
+                 activation="relu",
+                 # Embedding params.
+                 use_embed_repeat=True,
+                 embed_dim_1d=32,
+                 pos_embed_dim=64,
+                 use_bias_2d=True,
+                 pos_embed_max_l=32,
+                 init_params=False,
+                 *args, **kwargs):
+
+        super(StereoSelNN, self).__init__()
+
+        # Positional embedding.
+        self.use_embed_repeat = use_embed_repeat
+        self.pe_max_l = pos_embed_max_l
+        self.embed_pos = nn.Embedding(self.pe_max_l*2+1, pos_embed_dim)
+
+        # Embed z to a d_model space.
+        self.n_hl_embed = n_hl_embed
+        self.embed_x = [nn.Linear(in_dim,  # in_dim+embed_dim_1d,
+                                  embed_dim),
+                        get_activation(activation)]
+        for l in range(self.n_hl_embed-1):
+            self.embed_x.extend([nn.Linear(embed_dim, embed_dim),
+                                 get_activation(activation)])
+        self.embed_x.append(nn.Linear(embed_dim, embed_dim))
+        self.embed_x = nn.Sequential(*self.embed_x)
+
+        # Embed amino acid sequences.
+        self.embed_aa = nn.Embedding(20, embed_dim_1d)
+
+        # Transformer blocks.
+        self.num_layers = num_layers
+        self.transformer = []
+        for i in range(self.num_layers):
+            if self.use_embed_repeat:
+                _embed_dim_2d = pos_embed_dim
+                _embed_dim_1d = embed_dim_1d
+            else:
+                _embed_dim_2d = pos_embed_dim if i == 0 else None
+                _embed_dim_1d = embed_dim_1d if i == 0 else None
+            l_i = IdpGANBlock(embed_dim=embed_dim,
+                              d_model=d_model, nhead=nhead,
+                              dim_feedforward=dim_feedforward,
+                              dropout=dropout,
+                              layer_norm_eps=layer_norm_eps,
+                              norm_pos=norm_pos,
+                              embed_dim_2d=_embed_dim_2d,
+                              use_bias_2d=use_bias_2d,
+                              embed_dim_1d=_embed_dim_1d,
+                              activation=activation,
+                              dp_attn_norm=dp_attn_norm)
+            self.transformer.append(l_i)
+        self.transformer = nn.ModuleList(self.transformer)
+
+        # Fully-connected module to produce output 3d coords.
+        self.mlp_out = []
+        for l in range(n_hl_out):
+            self.mlp_out.extend([nn.Linear(embed_dim, embed_dim),
+                                get_activation(activation)])
+        self.mlp_out.append(nn.Linear(embed_dim, 1))
+        self.mlp_out.append(nn.Sigmoid())
+        self.mlp_out = nn.Sequential(*self.mlp_out)
+
+
+    def forward(self, x, a, out_feature=None):
+        x = x.transpose(1, 2)
+        prot_l = x.shape[2]
+        p = torch.arange(0, prot_l, device=x.device)
+        p = p[None,:] - p[:,None]
+        bins = torch.linspace(-self.pe_max_l, self.pe_max_l,
+                              self.pe_max_l*2+1, device=x.device)
+        b = torch.argmin(
+              torch.abs(bins.view(1, 1, -1) - p.view(p.shape[0], p.shape[1], 1)),
+              axis=-1)
+        p = self.embed_pos(b)
+        p = p.repeat(x.shape[0], 1, 1, 1)
+
+        # Embed input. Input is (N, E, L). Reshape to (L, N, E).
+        x = torch.transpose(x, 2, 1)
+        x = torch.transpose(x, 1, 0)
+
+        # Embed input features and z.
+        e_aa = self.embed_aa(a)
+        e_aa = torch.transpose(e_aa, 1, 0)
+        # embed_x_in = torch.cat([x, e_aa], axis=2)
+        embed_x_in = x
+        h = self.embed_x(embed_x_in)
+
+        # Run through the transformer.
+        for l, t_l in enumerate(self.transformer):
+            # Input the embeddings at all layers.
+            if self.use_embed_repeat:
+                h = t_l(h, x=e_aa, p=p)
+            # Only use the embeddings in the first layer.
+            else:
+                if l == 0:
+                    h = t_l(h, x=e_aa, p=p)
+                else:
+                    h = t_l(h, x=None, p=None)
+
+        # Produce 3d coords.
+        # r = self.mlp_out(h)
+        h = torch.transpose(h, 1, 0)
+        h = h.sum(axis=1)
+        h = self.mlp_out(h)
+        return h
+        # Shape is now (L, N, 3). Reshape to (N, L, 3).
+
+
+class ABSIdpGANGenerator(nn.Module):
+    
+    def __init__(self, idpgan, msel):
+        super().__init__()
+        self.idpgan = idpgan
+        self.msel = msel
+        
+#     def forward(self, z, x, out_feature=None):
+#         return self.nn_forward(z, [None, x, None],
+#                                out_feature=out_feature)
+        
+    def predict_idp(self, n_samples, aa_seq, device="cpu", batch_size=2048):
+        # Generate conformations.
+        xyz_gen, a = self.idpgan.predict_idp(n_samples, aa_seq, device, batch_size,
+                                             get_a=True)
+        # Calculate the dihedral angles.
+        dh_gen = torch_chain_dihedrals(xyz_gen)
+        dh_gen = torch.cat(
+            [torch.zeros((dh_gen.shape[0], 1), device=device), dh_gen], axis=1)
+        dh_gen = torch.cat(
+            [dh_gen, torch.zeros((dh_gen.shape[0], 2), device=device)], axis=1)
+        # Prepare the input for the mirror image selector network.
+        mask = torch.ones(xyz_gen.shape[0], xyz_gen.shape[1], device=device)
+        mask[:,0] = 0
+        mask[:,-2:] = 0
+        x = torch.cat([torch.cos(dh_gen).unsqueeze(2),
+                       torch.sin(dh_gen).unsqueeze(2),
+                       mask.unsqueeze(2)], axis=2)
+        # Run the selector network.
+        with torch.no_grad():
+            sel = []
+            for k in range(0, n_samples, batch_size):
+                sel_k = self.msel(x[k:k+batch_size],
+                                  a[k:k+batch_size].argmax(axis=1))
+                sel.append(sel_k)
+            sel = torch.cat(sel, axis=0)
+        # Reflect conformations which are predicted to have the wrong
+        # mirror image.
+        reflect_mask = (sel < 0.5).view(-1)
+        xyz_gen[reflect_mask,:,-1] = xyz_gen[reflect_mask,:,-1] * -1
+        return xyz_gen
+    
+
+def load_abs_netg_article(model_fp=None, sel_model_fp=None, device="cpu"):
+    """
+    Loads an instance of the idpGAN generator trained on data from ABSINTH
+    simulations as presented in the idpGAN article.
+    """
+    # idpGAN generator.
+    netg = IdpGANGenerator(nz=16, embed_dim=64, d_model=128, nhead=8,
+                           dim_feedforward=128, dropout=None, num_layers=8,
+                           layer_norm_eps=1e-05, norm_pos="pre",
+                           dp_attn_norm="d_model",
+                           n_hl_out=1, n_hl_embed=1,
+                           activation="lrelu",
+                           use_embed_repeat=True, embed_dim_1d=32,
+                           pos_embed_dim=64,
+                           use_bias_2d=True, pos_embed_max_l=32)
+    if model_fp is not None:
+        netg.load_state_dict(torch.load(model_fp))
+    netg = netg.to(device)
+    # Mirror image selector network.
+    msel_net = StereoSelNN(in_dim=3, embed_dim=96, d_model=128, nhead=8,
+                           dim_feedforward=256, dropout=0.0, num_layers=8,
+                           layer_norm_eps=1e-5, norm_pos="pre",
+                           dp_attn_norm="d_model", n_hl_out=1, n_hl_embed=1,
+                           activation="lrelu",
+                           use_embed_repeat=True, embed_dim_1d=32,
+                           pos_embed_dim=64, use_bias_2d=True,
+                           pos_embed_max_l=32)
+    msel_net = msel_net.to(device)
+    if sel_model_fp is not None:
+        msel_net.load_state_dict(torch.load(sel_model_fp))
+    return ABSIdpGANGenerator(netg, msel_net)

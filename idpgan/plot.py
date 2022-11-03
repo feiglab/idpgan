@@ -34,7 +34,8 @@ def plot_average_dmap_comparison(dmap_ref, dmap_gen, title,
     cbar = plt.colorbar()
     cbar.set_label(r"Average $d_{ij}$ [nm]")
     cbar.ax.tick_params(labelsize=cbar_fontsize)
-    plt.clim(0, max_d)
+    if max_d is not None:
+        plt.clim(0, max_d)
     plt.show()
     
     
@@ -156,10 +157,11 @@ def plot_rg_distribution(rg_vals, title, n_bins=50, dpi=96):
     plt.hist(rg_vals, bins=n_bins, histtype="step", density=True)
     plt.xlabel("Rg [nm]")
     plt.ylabel("density")
+    plt.title(title)
     plt.show()
     
     
-def plot_dmap_snapshots(dmap, title, n_snapshots, dpi=96):
+def plot_dmap_snapshots(dmap, n_snapshots, dpi=96):
     fig, ax = plt.subplots(1, n_snapshots,
                            figsize=(3*n_snapshots, 3), dpi=dpi,
                            constrained_layout=True)
