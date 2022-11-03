@@ -229,6 +229,9 @@ class IdpGANLayer(nn.Module):
     
     
 class IdpGANGenerator(nn.Module):
+    """
+    Class for the transformer-based idpGAN generator.
+    """
     
     def __init__(self, nz,
                  embed_dim,
@@ -447,11 +450,10 @@ def load_netg_article(model_fp=None, device="cpu"):
     return netg
 
 
-#####################################################################
-
-#####################################################################
-
 class StereoSelNN(nn.Module):
+    """
+    Class for the transformer-based mirror image selector network.
+    """
 
     def __init__(self, in_dim,
                  embed_dim,
@@ -481,9 +483,9 @@ class StereoSelNN(nn.Module):
         self.pe_max_l = pos_embed_max_l
         self.embed_pos = nn.Embedding(self.pe_max_l*2+1, pos_embed_dim)
 
-        # Embed z to a d_model space.
+        # Embed input to a d_model space.
         self.n_hl_embed = n_hl_embed
-        self.embed_x = [nn.Linear(in_dim,  # in_dim+embed_dim_1d,
+        self.embed_x = [nn.Linear(in_dim,
                                   embed_dim),
                         get_activation(activation)]
         for l in range(self.n_hl_embed-1):
@@ -549,7 +551,6 @@ class StereoSelNN(nn.Module):
         # Embed input features and z.
         e_aa = self.embed_aa(a)
         e_aa = torch.transpose(e_aa, 1, 0)
-        # embed_x_in = torch.cat([x, e_aa], axis=2)
         embed_x_in = x
         h = self.embed_x(embed_x_in)
 
@@ -566,12 +567,10 @@ class StereoSelNN(nn.Module):
                     h = t_l(h, x=None, p=None)
 
         # Produce 3d coords.
-        # r = self.mlp_out(h)
         h = torch.transpose(h, 1, 0)
         h = h.sum(axis=1)
         h = self.mlp_out(h)
         return h
-        # Shape is now (L, N, 3). Reshape to (N, L, 3).
 
 
 class ABSIdpGANGenerator(nn.Module):
@@ -580,10 +579,6 @@ class ABSIdpGANGenerator(nn.Module):
         super().__init__()
         self.idpgan = idpgan
         self.msel = msel
-        
-#     def forward(self, z, x, out_feature=None):
-#         return self.nn_forward(z, [None, x, None],
-#                                out_feature=out_feature)
         
     def predict_idp(self, n_samples, aa_seq, device="cpu", batch_size=2048):
         # Generate conformations.
