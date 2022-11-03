@@ -45,7 +45,7 @@ We also have the following files, that allow you to run a demo of the generatati
   
 ## Files for the idpGAN version trained on a ABSINTH implicit solvent simulations
 
-We also trained an idpGAN version on Cα traces extracted from all-atom simulations performed using the [ABSINTH implicit solvent model](https://pubmed.ncbi.nlm.nih.gov/18506808/), which was found to [reproduce with good accuracy the experimental behavior of several IDPs](https://pubmed.ncbi.nlm.nih.gov/29805999/). In the `data` directory of this repository, we have the following files for this version of idpGAN:
+We also trained an idpGAN version on Cα traces extracted from all-atom simulations performed using the [ABSINTH implicit solvent model](https://pubmed.ncbi.nlm.nih.gov/18506808/), which was found to [reproduce with good accuracy the experimental behavior of several IDPs](https://pubmed.ncbi.nlm.nih.gov/29805999/). ABSINTH simulations can be performed using the [CAMPARI software package](https://campari.sourceforge.net/V4/index.html). In the `data` directory of this repository, we have the following files for this version of idpGAN:
  - `idpgan_training_set.fasta`: idpGAN training set sequences. For this version of the model, we used simulation data from all sequences with length <= 40 residues.
  - `abstest.fasta`: this is the test set sequences that we used for evaluating this version of idpGAN.
  - `abs_generator.pt`: PyTorch weights for a generator model pre-trained on ABSINTH simulation data.
