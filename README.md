@@ -2,7 +2,7 @@
 
 This is the idpGAN repository. IdpGAN is a machine-learning based conformational ensemble generator for coarse grained (CG) models of intrinsically disordered proteins (IDPs).
 
-Details of idpGAN are described in [bioRxiv](https://www.biorxiv.org/content/10.1101/2022.06.18.496675v1).
+Details of idpGAN are described in [https://doi.org/10.1038/s41467-023-36443-x](https://doi.org/10.1038/s41467-023-36443-x).
 
 ## How to run
 
