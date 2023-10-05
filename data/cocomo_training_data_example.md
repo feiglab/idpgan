@@ -1,0 +1,1 @@
+Example training data files with COCOMO MD trajectories for 10 intrinsically disordered regions can be found [here](https://github.com/feiglab/idpgan/releases/download/data_example/cocomo_training_example.zip). This is a part the original COCOMO-based idpGAN training set.
