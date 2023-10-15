@@ -628,7 +628,11 @@ def load_abs_netg_article(model_fp=None, sel_model_fp=None, device="cpu"):
                            pos_embed_dim=64,
                            use_bias_2d=True, pos_embed_max_l=32)
     if model_fp is not None:
-        netg.load_state_dict(torch.load(model_fp))
+        if device != "cpu":
+            netg.load_state_dict(torch.load(model_fp))
+        else:
+            netg.load_state_dict(
+                torch.load(model_fp, map_location=torch.device('cpu')))
     netg = netg.to(device)
     # Mirror image selector network.
     msel_net = StereoSelNN(in_dim=3, embed_dim=96, d_model=128, nhead=8,
@@ -641,5 +645,9 @@ def load_abs_netg_article(model_fp=None, sel_model_fp=None, device="cpu"):
                            pos_embed_max_l=32)
     msel_net = msel_net.to(device)
     if sel_model_fp is not None:
-        msel_net.load_state_dict(torch.load(sel_model_fp))
+        if device != "cpu":
+            msel_net.load_state_dict(torch.load(sel_model_fp))
+        else:
+            msel_net.load_state_dict(
+                torch.load(sel_model_fp, map_location=torch.device('cpu')))
     return ABSIdpGANGenerator(netg, msel_net)
