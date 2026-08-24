@@ -23,17 +23,21 @@ one_to_three = {"Q": "GLN", "W": "TRP", "E": "GLU", "R": "ARG", "T": "THR",
                 "D": "ASP", "F": "PHE", "G": "GLY", "H": "HIS", "K": "LYS",
                 "L": "LEU", "C": "CYS", "V": "VAL", "N": "ASN", "M": "MET"}
 
-def seq_to_cg_pdb(seq, out_fp=None):
+def seq_to_cg_pdb(seq, out_fp=None, rename_to_ca=False):
     """
     Gets an amino acid sequence and returns a template
     CG PDB file.
     """
+    if rename_to_ca:
+        atom_type = "CA"
+    else:
+        atom_type = "CG"
     pdb_lines = []
     for i, aa_i in enumerate(seq):
         res_idx = i + 1
         aa_i = one_to_three[aa_i]
-        line_i = "ATOM{:>7} CG   {} A{:>4}       0.000   0.000   0.000  1.00  0.00\n".format(
-                   str(res_idx), aa_i, str(res_idx))
+        line_i = "ATOM{:>7} {}   {} A{:>4}       0.000   0.000   0.000  1.00  0.00\n".format(
+                   str(res_idx), atom_type, aa_i, str(res_idx))
         pdb_lines.append(line_i)
     pdb_content = "".join(pdb_lines)
     if out_fp is not None:
